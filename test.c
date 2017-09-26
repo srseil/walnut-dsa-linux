@@ -32,18 +32,143 @@ struct cb_pair {
 };
 
 
-void emult(struct cb_pair *result, struct cb_pair m, int braid, int *t_values);
+//void emult(struct cb_pair *result, struct cb_pair m, int braid, int *t_values);
+void emult(int *matrix, int *perm, int artin, int *t_values, int q, int n);
 void gen_cloaking_elem(int **dest, int *dest_size,
-	int a, int b, int n, int bits);
+	int *perm, int a, int b, int n, int bits);
+void gen_pub_key(int **dest_matrix, int **dest_perm,
+		int *priv_key, int priv_key_len, int *t_values, int q, int n);
 int *gen_priv_key(int a, int b, int n, int bits);
+void gen_priv_key2(int **dest, int *dest_size, int n, int bits);
 void gen_pure_braid(int *dest, int x, int n);
+void gen_pure_braids(int **dest, int *dest_size, int min_len, int n);
 void encode(int **dest, int *dest_size, char *message, int size, int n);
+
+void generate_signature(int **dest, int *dest_len, char *hash, int hash_len,
+		int *priv_key, int priv_key_len, int *pub_key_matrix, int *pub_key_perm,
+		int *t_values, int bits);
+int verify_signature(int *sig, int sig_len, char *hash, int hash_len,
+		int *pub_key_matrix, int *pub_key_perm, int *t_values, int q, int n);
 
 void example();
 void cloaking_example();
 
+void print_braid(int *braid, int length) {
+	for (int i = 0; i < length; i++)
+		printf("%i ", braid[i]);
+	printf("\n");
+}
 
 int main(int argc, char *argv[]) {
+	
+
+	//int tt_values[8] = {1, 1, 20, 14, 5, 9, 10, 7};
+	int tt_values[8] = {14, 1, 20, 1, 5, 9, 10, 7};
+	int tbraid[] = {
+		4, 5, -2, 7, -5, 7, -4, 7, -6, -6, 7, 1, 1, 2, 4, -5, 7, 7, 6, 6, 1, -5,
+		7, 5, 3, 1, 5, 2, 5, 7, 5, -4, 5, -2, -4, 2, 4, -1, -1, -6, -4, -1, -2,
+		7, -5, 1, -2, 4, 6, -1, -5, 6, 2, -1, 6, -7, -2, -3, -2, -5, -4, -7, -1,
+		2, 2, 4, -6, 2, -4, 1, 1, 7, 6, -5, 3, 7, 2, -6, -5, 1, 5, 4, 3, 6, -7,
+		-2, 4, 4, -6, 3, -5, 6, 3, 7, -5, -4, -7, -1, -6, -6, 7, -6, -5, -7, 5,
+		3, 5, 5, 1, 4, -6, -5, 4, 1
+	};
+
+	int *pubk_matrix, *pubk_perm;
+	gen_pub_key(&pubk_matrix, &pubk_perm, tbraid, sizeof(tbraid) / sizeof(int),
+		tt_values, 32, 8);
+
+
+	int *signature, signature_len;
+	char hash[4] = {0x11, 0x22, 0x33, 0x44};
+	// Hash "length"? More like size, since it means the bytes?
+	generate_signature(&signature, &signature_len, hash, 4, tbraid,
+		sizeof(tbraid) / sizeof(int), pubk_matrix, pubk_perm, tt_values, 32);
+
+	verify_signature(signature, signature_len, hash, 4, pubk_matrix, pubk_perm, tt_values, 32, 8);
+
+	return 0;
+
+	int n = 8;
+	int *identity = malloc(n * n * sizeof(int));
+	for (int i = 0; i < n * n; i++) {
+		identity[i] = (i % (n + 1) == 0) ? 1 : 0;
+	}
+	/*
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++)
+			printf("%i ", identity[i * n + j]);
+		printf("\n");
+	}
+	printf("\n");
+	*/
+
+	int *id_perm = malloc(n * sizeof(int));
+	for (int i = 0; i < n; i++)
+		id_perm[i] = i + 1;
+
+
+	for (int i = 0; i < sizeof(tbraid) / sizeof(int); i++) {
+		emult(identity, id_perm, tbraid[i], tt_values, 32, n);
+	}
+
+	return 0;
+
+
+
+
+
+
+	
+	int *cloak = NULL;
+	int cloak_size = 0;
+	int cloak_perm[8] = {3, 2, 8, 5, 6, 7, 1, 4};
+	gen_cloaking_elem(&cloak, &cloak_size, cloak_perm, 3, 6, 8, 32);
+	print_braid(cloak, cloak_size);
+	return 0;
+
+
+
+	int *pri = NULL;
+	int pri_len = 0;
+	gen_priv_key2(&pri, &pri_len, 8, 64);
+	print_braid(pri, pri_len);
+	return 0;
+
+
+
+	int *pures;
+	int pures_len = 0;
+	int min_len = 10;
+	/*
+	gen_pure_braids(&pures, &pures_len, min_len, 8);
+	printf("min_len: %i, actual_len: %i\n", min_len, pures_len);
+	print_braid(pures, pures_len);
+	*/
+
+	encode(&pures, &pures_len, "ab1d3fgAui89", 12 * sizeof(char), 8);
+	print_braid(pures, pures_len);
+
+	int purperm[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	for (int i = 0; i < pures_len; i++) {
+		int k = abs(pures[i]);
+		int temp = purperm[k - 1];
+		purperm[k - 1] = purperm[k];
+		purperm[k] = temp;
+	}
+
+	for (int i = 0; i < 8; i++)
+		printf("%i ", purperm[i]);
+	printf("\n");
+
+	return 0;
+
+
+
+	return 0;
+
+
+
+
 
 	int key[] = {
 		4, 5, -2, 7, -5, 7, -4, 7, -6, -6, 7, 1, 1, 2, 4, -5, 7, 7, 6, 6, 1, -5,
@@ -59,6 +184,12 @@ int main(int argc, char *argv[]) {
 		-1, 4, -3, 6, -3, 5, 1, -5, -2, 4, -6, -7, -1, -1, 3, -7, -4, -3, 2, -5,
 		2, 5, -1, 6, 4, 2, 3, 4, -3, 2, 3, -4, 5, 6, 5, -4, 2, -1, 6, -7, -6
 			*/
+
+		/*
+		2, 3, 4, 5, 6, -5, -4, 3, 2, 6, -4, 5, -6, -5, 4, 3, -4, -5, 6, 5, -4,
+		-3, 1, -2, -3, -4, -5, 6, 7, -6, -5, -4, 3, -2, 1, 5, -6, -7, 6, 4, -3,
+		-3, -4, -5, 2, -1, -1, -2, -6, -6 /*, 7, 7, 6, 6, 2, 1, 1, -2, 5, 4, 3, 3, 		-4, -6, 7, 6, -5, -1, 2, -3, 4, 5, 6, -7, -6, 5, 4, 3, 2, -1, 3, 4, -5,
+		-6, 5, 4, -3, -4, 5, 6, -5, 4, -6, -2, -3, 4, 5, -6, -5, -4, -3, -2*/
 	};
 
 	int perm[] = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -181,7 +312,7 @@ void gen_cloaking_elem(int **dest, int *dest_size,
 		int r_permutation[8] = {0};
 		result.permutation = r_permutation;
 
-		emult(&result, m, lcf[i], tvals);
+		//emult(&result, m, lcf[i], tvals);
 
 		memcpy(m.matrix, result.matrix, 8 * 8 * sizeof(int));
 		memcpy(m.permutation, result.permutation, 8 * sizeof(int));
@@ -191,39 +322,8 @@ void gen_cloaking_elem(int **dest, int *dest_size,
 	free(m.permutation);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	return 0;
 	// end
-	
-
-
-
-
-
-
-
-	int *cloak = NULL;
-	int cloak_size = 0;
-	gen_cloaking_elem(&cloak, &cloak_size, 2, 5, 8, 32);
-	return 0;
 
 	//cloaking_example();
 	//int *priv = gen_priv_key(3, 6, 8, 128);
@@ -242,13 +342,187 @@ void gen_cloaking_elem(int **dest, int *dest_size,
 	return 0;
 }
 
+void gen_pub_key(int **dest_matrix, int **dest_perm,
+		int *priv_key, int priv_key_len, int *t_values, int q, int n) {
+	int *matrix = malloc(n * n * sizeof(int));
+	int *perm = malloc(n * sizeof(int));
+
+	for (int i = 0; i < n * n; i++)
+		matrix[i] = (i % (n + 1) == 0) ? 1 : 0;
+	for (int i = 0; i < n; i++)
+		perm[i] = i + 1;
+
+	for (int i = 0; i < priv_key_len; i++)
+		emult(matrix, perm, priv_key[i], t_values, q, n);
+
+	*dest_matrix = matrix;
+	*dest_perm = perm;
+}
+
+void generate_signature(int **dest, int *dest_len, char *hash, int hash_len,
+		int *priv_key, int priv_key_len, int *pub_key_matrix, int *pub_key_perm,
+		int *t_values, int bits) {
+	int n = 8;
+	int q = 32;
+	int a = 0, b = 0;
+	//int *t_values = malloc(n * sizeof(int));
+	int rand = 0;
+
+	int *v, *v1, *v2, v_len, v1_len, v2_len;
+	int *identity_perm = malloc(n * sizeof(int));
+
+	int mark = 0;
+	int *enc, enc_len;
+	int *sig, sig_len;
+
+	for (int i = 0; i < n; i++)
+		identity_perm[i] = i + 1;
+
+
+	// Choose a and b.
+	syscall(SYS_getrandom, &rand, sizeof(int), 0);
+	a = abs(rand) % (n - 3) + 2;
+	do {
+		syscall(SYS_getrandom, &rand, sizeof(int), 0);
+		b = abs(rand) % (n - a - 1) + a + 1;
+	} while (a == b);
+
+	a = 2;
+	b = 4;
+	/*
+	// Choose T-values.
+	for (int i = 0; i < n; i++) {
+		if (i + 1 == a || i + 1 == b) {
+			t_values[i] = 1;
+		} else {
+			syscall(SYS_getrandom, &rand, sizeof(int), 0);
+			t_values[i] = abs(rand) % (q - 1) + 1;
+		}
+	}
+	*/
+
+	// Generate cloaking elements.
+	gen_cloaking_elem(&v, &v_len, identity_perm, a, b, n, bits);
+	gen_cloaking_elem(&v1, &v1_len, pub_key_perm, a, b, n, bits);
+	gen_cloaking_elem(&v2, &v2_len, pub_key_perm, a, b, n, bits);
+
+	// Encode hash into braid.
+	encode(&enc, &enc_len, hash, hash_len, n);
+	
+	// Build signature.
+	sig_len = v_len +  2 * v1_len + v2_len + 2 * priv_key_len + enc_len;
+	sig = malloc(sig_len * sizeof(int));
+	
+	memcpy(sig, v2, v2_len * sizeof(int));
+	mark += v2_len;
+
+	for (int i = 0; i < v1_len; i++)
+		sig[mark + i] = v1[v1_len - i - 1] * -1;
+	mark += v1_len;
+
+	for (int i = 0; i < priv_key_len; i++)
+		sig[mark + i] = priv_key[priv_key_len - i - 1] * -1;
+	mark += priv_key_len;
+
+	memcpy(sig + mark, v, v_len * sizeof(int));
+	mark += v_len;
+
+	memcpy(sig + mark, enc, enc_len * sizeof(int));
+	mark += enc_len;
+
+	memcpy(sig + mark, priv_key, priv_key_len * sizeof(int));
+	mark += priv_key_len;
+
+	memcpy(sig + mark, v1, v1_len * sizeof(int));
+	mark += v1_len;
+
+	assert(mark == sig_len);
+
+	// Convert signature into left canonical form.
+	sig = left_canonical_form(&sig_len, sig, sig_len, n);
+
+	// Apply Dehornoy's algorithm to signature.
+
+
+	*dest = sig;
+	*dest_len = sig_len;
+}
+
+int verify_signature(int *sig, int sig_len, char *hash, int hash_len,
+		int *pub_key_matrix, int *pub_key_perm, int *t_values, int q, int n) {
+	int *enc, enc_len;
+	int *msg_pub_key_matrix, *msg_pub_key_perm;
+
+	// Encode hash into braid.
+	encode(&enc, &enc_len, hash, hash_len, n);
+
+	// Generate public key for encoded message.
+	gen_pub_key(&msg_pub_key_matrix, &msg_pub_key_perm,
+		enc, enc_len, t_values, q, n);
+
+	printf("\n\n\n\n");
+	print_braid(sig, sig_len);
+	printf("\n\n\n\n");
+
+	/*
+	for (int i = 0; i < sig_len; i++) {
+		emult(msg_pub_key_matrix, msg_pub_key_perm, sig[i], t_values, q, n);
+	}
+	*/
+
+	printf("TEST ==============================\n");
+	int *matrix = calloc(n * n, sizeof(int));
+	// Matrix multiplication
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			for (int k = 0; k < n; k++) {
+				matrix[i * n + j] ^= galois_single_multiply(
+					msg_pub_key_matrix[i * n + k], pub_key_matrix[k * n + j], log2(32));
+			}
+		}
+	}
+
+
+	for (int i = 0; i < sig_len; i++)
+		emult(pub_key_matrix, pub_key_perm, sig[i], t_values, q, n);
+	printf("Should be equal to:\n");
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			printf("%2i, ", pub_key_matrix[i * n + j]);
+		}
+		printf("\n");
+	}
+
+	printf("Multiplied matrix:\n");
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			printf("%2i, ", matrix[i * n + j]);
+		}
+		printf("\n");
+	}
+	
+	printf("\n");
+	for (int i = 0; i < n * n; i++) {
+		if (matrix[i] != pub_key_matrix[i]) {
+			printf("Verification FAILED!\n");
+			return -1;
+		}
+	}
+
+	printf("Verification SUCCEEDED!\n");
+	return 0;
+}
+
+void inverse_braid(int *dest, int *braid, int len) {
+	for (int i = 0; i < len; i++)
+		dest[i] = braid[len - i - 1];
+}
+
 /* Encodes a message given as a bit stream into a braid. The generators used are
- * picked at random, thus it is non-deterministic. */
+ * picked at random, thus this function is non-deterministic. */
 void encode(int **dest, int *dest_size, char *msg, int msg_size, int n) {
 	// Reserve enough space for the unreduced worst case.
-	// SAME AS BELOW???
-	int *braid = calloc(PURE_BRAID_SIZE(1, n) * 4 * msg_size * 2,
-		sizeof(char));
+	int *braid = calloc(PURE_BRAID_SIZE(1, n) * 4 * msg_size * 2, sizeof(int));
 	unsigned char digest = *msg;
 
 	int mark = 0;            // Marker for the braid array index.
@@ -257,8 +531,8 @@ void encode(int **dest, int *dest_size, char *msg, int msg_size, int n) {
 		power1, power2;      // Powers of the generators, two high bits.
 	int reduced_middle = 0;  // Flag: Remove one reduced middle generator?
 	int digest_complete = 0; // Flag: Get new digest from message?
+	int duplicate;           // Flag: Generator already in use?
 
-	bool duplicate;
 	// Pick four random generators to use.
 	for (int i = 0; i < 4; i++) {
 		do {
@@ -266,10 +540,10 @@ void encode(int **dest, int *dest_size, char *msg, int msg_size, int n) {
 			syscall(SYS_getrandom, &rand, sizeof(int), 0);
 			gens[i] = abs(rand) % (n - 1) + 1;
 
-			duplicate = false;
+			duplicate = 0;
 			for (int j = 0; j < i; j++) {
 				if (gens[j] == gens[i]) {
-					duplicate = true;
+					duplicate = 1;
 					break;
 				}
 			}
@@ -277,12 +551,12 @@ void encode(int **dest, int *dest_size, char *msg, int msg_size, int n) {
 		//printf("Randomly chosen generator: %i\n", gens[i]);
 	}
 
-	/* TEST
+	///* TEST
 	gens[0] = 1;
 	gens[1] = 3;
 	gens[2] = 5;
 	gens[3] = 7;
-	*/
+	//*/
 
 	// Start with gen2 for better loop management.
 	gen2 = gens[(48 & digest) >> 4];
@@ -316,7 +590,7 @@ void encode(int **dest, int *dest_size, char *msg, int msg_size, int n) {
 		}
 
 		// Build freely reduced start and end connecting the two generators.
-		if (gen1 > gen2) {
+		if (gen1 >= gen2) {
 			for (int i = gen1; i > gen2; i--, mark++) {
 				braid[mark] = i;
 			}
@@ -336,6 +610,56 @@ void encode(int **dest, int *dest_size, char *msg, int msg_size, int n) {
 
 	// Build last generator ending.
 	for (int i = gen2 + 1; i <= n - 1; i++, mark++) {
+		braid[mark] = i * -1;
+	}
+
+	*dest = braid;
+	*dest_size = mark;
+}
+
+void gen_pure_braids(int **dest, int *dest_size, int min_len, int n) {
+	int *braid = calloc(min_len + PURE_BRAID_SIZE(1, n), sizeof(int));
+	int mark = 0;            // Marker for the braid array index.
+	int rand = 0;            // Variable to store RNG values.
+	int gen1, gen2;          // Random generators being used.
+	int reduced_middle = 0;  // Flag: Remove one reduced middle generator?
+
+	// Start with gen2 for better loop management.
+	syscall(SYS_getrandom, &rand, sizeof(int), 0);
+	gen2 = abs(rand) % (n - 1) + 1;
+	for (int i = n - 1; i > gen2; i--, mark++)
+		braid[mark] = i;
+		
+	while (true) {
+		// Update generators.
+		gen1 = gen2;
+		syscall(SYS_getrandom, &rand, sizeof(int), 0);
+		gen2 = abs(rand) % (n - 1) + 1;
+
+		// Build first generator middle part.
+		for (int i = 0 + reduced_middle; i < 2; i++, mark++) {
+			braid[mark] = gen1;
+		}
+
+		if (mark >= min_len)
+			break;
+
+		// Build freely reduced start and end connecting the two generators.
+		if (gen1 >= gen2) {
+			for (int i = gen1; i > gen2; i--, mark++) {
+				braid[mark] = i;
+			}
+			reduced_middle = 0;
+		} else if (gen1 < gen2) {
+			for (int i = gen1 + 1; i < gen2; i++, mark++) {
+				braid[mark] = i * -1;
+			}
+			reduced_middle = 1;
+		}
+	}
+
+	// Build last generator ending.
+	for (int i = gen1 + 1; i <= n - 1; i++, mark++) {
 		braid[mark] = i * -1;
 	}
 
@@ -363,6 +687,22 @@ void gen_pure_braid(int *dest, int x, int n) {
 
 /* Generates a private key in the braid group n with the specified fixed values
  * a and b and the specified security given in bits. */
+void gen_priv_key2(int **dest, int *dest_size, int n, int bits) {
+	int length = 20; // how do we calculate this?
+	int *braid = calloc(length, sizeof(int));
+	int rand = 0;
+
+	for (int i = 0; i < length; i++) {
+		do {
+			syscall(SYS_getrandom, &rand, sizeof(int), 0);
+			braid[i] = abs(rand) % (2 * n - 1) - (n - 1);
+		} while (braid[i] == 0 || i > 0 && braid[i - 1] * -1 == braid[i]);
+	}
+
+	*dest = braid;
+	*dest_size = length;
+}
+
 int *gen_priv_key(int a, int b, int n, int bits) {
 	int l = bits / (2 * log2f((n - 1) * (n - 2))) + 1;
 	printf("Security level: %i, L = %i\n", bits, l);
@@ -426,41 +766,55 @@ int *gen_priv_key(int a, int b, int n, int bits) {
 }
 
 /* Generates a cloaking elemtent in the braid group Bn with the specified delimiters a, b and c, with the specified number of bits in security. */
+//void gen_cloaking_elem(int **dest, int *dest_size,
+		//int a, int b, int n, int bits) {
 void gen_cloaking_elem(int **dest, int *dest_size,
-		int a, int b, int n, int bits) {
+		int *perm, int a, int b, int n, int bits) {
 	int mark = 0;
-	int l = bits / (2 * log2f((n - 1) * (n - 2))) + 1;
+	//int gens_len = bits / (2 * log2f((n - 1) * (n - 2))) + 1;
+	int gens_len = bits / (3 * log2f(n * (n - 1))) + 1;
+	printf("Min Generators Length: %i\n", gens_len);
 
 	// Allocate enough space for the worst case.
 	// This needs to be refined!
 	//int *braid = malloc(PURE_BRAID_SIZE(1, n - 1) * 4 * l * sizeof(int));
-	int *braid = malloc((10 + 4 + 14 * 2 * l) * sizeof(int));
+	int *braid = malloc((10 + 4 + 14 * 2 * gens_len) * sizeof(int));
+	// What about the permutation part at the very start and end???
 	
 	int rand = 0;
 	syscall(SYS_getrandom, &rand, sizeof(int), 0);
 	int mid = abs(rand) % (n - 1) + 1;
 	printf("Middle choice: %i\n", mid);
-	printf("A: %i, B: %i\n", a, b);
 
+	// Get a and b of inverse permutation.
+	int perm_a = 0, perm_b = 0;
+	for (int i = 0; i < n; i++) {
+		if (perm[i] == a)
+			perm_a = i + 1;
+		else if (perm[i] == b)
+			perm_b = i + 1;
+	}
+	printf("Perm-A: %i, Perm-B: %i\n", perm_a, perm_b);
 
 	// Build permuting part at start to satisfy mid -> a, mid + 1 -> b.
-	if (mid <= a) {
-		for (int i = 0; i < a - mid; i++, mark++)
-			braid[mark] = a - i - 1;
-		for (int i = 0; i < b - (mid + 1); i++, mark++)
-			braid[mark] = b - i - 1;
-	} else if (mid < b) {
-		for (int i = 0; i < b - (mid + 1); i++, mark++)
+	if (mid <= perm_a) {
+		for (int i = 0; i < perm_a - mid; i++, mark++)
+			braid[mark] = perm_a - i - 1;
+		for (int i = 0; i < perm_b - (mid + 1); i++, mark++)
+			braid[mark] = perm_b - i - 1;
+	} else if (mid < perm_b) {
+		for (int i = 0; i < perm_b - (mid + 1); i++, mark++)
 			braid[mark] = mid + 1 + i;
-		for (int i = 0; i < mid - a; i++, mark++)
-			braid[mark] = a + i;
+		for (int i = 0; i < mid - perm_a; i++, mark++)
+			braid[mark] = perm_a + i;
 	} else {
-		for (int i = 0; i < (mid + 1) - b; i++, mark++)
-			braid[mark] = b + i;
-		for (int i = 0; i < mid - a; i++, mark++)
-			braid[mark] = a + i;
+		for (int i = 0; i < (mid + 1) - perm_b; i++, mark++)
+			braid[mark] = perm_b + i;
+		for (int i = 0; i < mid - perm_a; i++, mark++)
+			braid[mark] = perm_a + i;
 	}
 
+	/*
 	// Attach l random pure braid generators.
 	for (int i = 0; i < l; i++) {
 		int rand = 0, x;
@@ -475,11 +829,21 @@ void gen_cloaking_elem(int **dest, int *dest_size,
 
 		gen_pure_braid(&(braid[mark]), low, high, n);
 		mark += PURE_BRAID_SIZE(low, high);
-		*/
+		/
 
 		gen_pure_braid(braid + mark, x, n);
 		mark += PURE_BRAID_SIZE(x, n);
 	}
+	*/
+
+	// Naming is confusing -> size? len? Rathar min and actual size
+	int gens_size = 0;
+	int *pures = NULL;
+	gen_pure_braids(&pures, &gens_size, gens_len, n);
+	puts("Generated Pures:");
+	print_braid(pures, gens_size);
+	memcpy(braid + mark, pures, gens_size * sizeof(int));
+	mark += gens_size;
 
 	// Build middle part.
 	braid[mark] = mid;
@@ -500,55 +864,56 @@ void gen_cloaking_elem(int **dest, int *dest_size,
 	printf("\n");
 }
 
-void emult(struct cb_pair *result, struct cb_pair m, int braid, int *t_values) {
-	int n = m.n;		// Number of braid strands
-	int q = m.q;		// Galois field size
-	int w = log2(q);	// Prime potency for galois field arithmetic
-	int abs_braid = abs(braid);
+//void emult(struct cb_pair *result, struct cb_pair m, int braid, int *t_values) {
+void emult(int *matrix, int *perm, int artin, int *t_values, int q, int n) {
+	int w = log2(q); // Prime potency for galois field arithmetic
+	int abs_artin = abs(artin);
+	int *result_matrix = calloc(n * n, sizeof(int));
+	int *result_perm = calloc(n, sizeof(int));
 
-	printf("Artin generator: %i\n", braid);
+	printf("Artin generator: %i\n", artin);
 
 	// T-variable permutation and evaluation
 	int t_val;
-	if (braid < 0) {
-		int t_i = m.permutation[(abs_braid - 1 + 1) % n];
+	if (artin < 0) {
+		int t_i = perm[(abs_artin - 1 + 1) % n];
 		t_val = galois_inverse(t_values[t_i - 1], w);
 	} else {
-		int t_i = m.permutation[braid - 1];
+		int t_i = perm[artin - 1];
 		t_val = t_values[t_i - 1];
 	}
 
 	printf("Evaluated t-value: %i\n", t_val);
 
 	// Colored Burau matrix construction
-	int braid_matrix[n * n];
+	int artin_matrix[n * n];
 	for (int row = 0; row < n; row++) {
-		if (row == abs_braid - 1) {
-			for (int col = 0; col < abs_braid - 2; col++)
-				braid_matrix[row * n + col] = 0;
-			if (braid < 0) {
-				braid_matrix[row * n + abs_braid - 2] = 1;
-				braid_matrix[row * n + abs_braid - 1] = t_val;
-				if (abs_braid != n)
-					braid_matrix[row * n + abs_braid] = t_val;
+		if (row == abs_artin - 1) {
+			for (int col = 0; col < abs_artin - 2; col++)
+				artin_matrix[row * n + col] = 0;
+			if (artin < 0) {
+				artin_matrix[row * n + abs_artin - 2] = 1;
+				artin_matrix[row * n + abs_artin - 1] = t_val;
+				if (abs_artin != n)
+					artin_matrix[row * n + abs_artin] = t_val;
 			} else {
-				braid_matrix[row * n + braid - 2] = t_val;
-				braid_matrix[row * n + braid - 1] = t_val;
-				if (braid != n)
-					braid_matrix[row * n + braid] = 1;
+				artin_matrix[row * n + artin - 2] = t_val;
+				artin_matrix[row * n + artin - 1] = t_val;
+				if (artin != n)
+					artin_matrix[row * n + artin] = 1;
 			}
-			for (int col = abs_braid + 1; col < n; col++)
-				braid_matrix[row * n + col] = 0;
+			for (int col = abs_artin + 1; col < n; col++)
+				artin_matrix[row * n + col] = 0;
 		} else {
 			for (int col = 0; col < n; col++)
-				braid_matrix[row * n + col] = (row == col) ? 1 : 0;
+				artin_matrix[row * n + col] = (row == col) ? 1 : 0;
 		}
 	}
 
 	printf("Constructed Colored Burau matrix:\n");
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
-			printf("%2i, ", braid_matrix[i * n + j]);
+			printf("%2i, ", artin_matrix[i * n + j]);
 		}
 		printf("\n");
 	}
@@ -557,8 +922,8 @@ void emult(struct cb_pair *result, struct cb_pair m, int braid, int *t_values) {
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
 			for (int k = 0; k < n; k++) {
-				result->matrix[i * n + j] ^= galois_single_multiply(
-					m.matrix[i * n + k], braid_matrix[k * n + j], w);
+				result_matrix[i * n + j] ^= galois_single_multiply(
+					matrix[i * n + k], artin_matrix[k * n + j], w);
 			}
 		}
 	}
@@ -566,19 +931,19 @@ void emult(struct cb_pair *result, struct cb_pair m, int braid, int *t_values) {
 	printf("Multiplied matrix:\n");
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
-			printf("%2i, ", result->matrix[i * n + j]);
+			printf("%2i, ", result_matrix[i * n + j]);
 		}
 		printf("\n");
 	}
 
 	// Permutation composition
 	for (int i = 0; i < n; i++) {
-		if (i == abs_braid - 1)
-			result->permutation[i] = m.permutation[i + 1];
-		else if (i == abs_braid + 1 - 1)
-			result->permutation[i] = m.permutation[i - 1];
+		if (i == abs_artin - 1)
+			result_perm[i] = perm[i + 1];
+		else if (i == abs_artin + 1 - 1)
+			result_perm[i] = perm[i - 1];
 		else
-			result->permutation[i] = m.permutation[i];
+			result_perm[i] = perm[i];
 	}
 
 	printf("Composed permutation:\n");
@@ -586,12 +951,18 @@ void emult(struct cb_pair *result, struct cb_pair m, int braid, int *t_values) {
 		printf("%i ", i + 1);
 	printf("\n");
 	for (int i = 0; i < n; i++)
-		printf("%i ", result->permutation[i]);
+		printf("%i ", result_perm[i]);
 	printf("\n");
 
 	printf("\n");
+
+	memcpy(matrix, result_matrix, n * n * sizeof(int));
+	memcpy(perm, result_perm, n * sizeof(int));
+	free(result_matrix);
+	free(result_perm);
 }
 
+/*
 void cloaking_example() {
 	int *cloak, cloak_size;
 	gen_cloaking_elem(&cloak, &cloak_size, 3, 6, 8, 32);
@@ -631,7 +1002,9 @@ void cloaking_example() {
 		memcpy(cb.permutation, result.permutation, 8 * sizeof(int));
 	}
 }
+*/
 
+/*
 void example() {
 	struct cb_pair m;
 	m.n = 8;
@@ -704,6 +1077,7 @@ void example() {
 	free(m.matrix);
 	free(m.permutation);
 }
+*/
 
 /*
 void example2() {
