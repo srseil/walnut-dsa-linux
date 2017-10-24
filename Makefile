@@ -1,6 +1,6 @@
 
 main:
-	gcc -std=c99 -lm -g test.c bkl.h galois.c galois.h
+	gcc -std=c99 -lm -g -pg test.c
 
 run:
 	./a.out

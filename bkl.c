@@ -1,3 +1,6 @@
+#ifndef BKL
+#define BKL
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -654,4 +657,6 @@ int *left_canonical_form(int *artins_size, int *braid, int length, int n) {
 	*artins_size = mark;
 	return artins;
 }
+
+#endif
 
