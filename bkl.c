@@ -10,11 +10,16 @@
 #define POSITIVE 1
 #define NEGATIVE 2
 
+void left_canonical_form(int8_t **dest, int *dest_len, int8_t *braid, int len, int n);
+
+/*
 struct band_gen {
 	int t;
 	int s;
 };
+*/
 
+/*
 struct canonical_factor {
 	int fundamental;       // Flag for fundamental braid (none, pos, neg).
 	int fundamental_power; // The power of the fundamental braid.
@@ -22,10 +27,11 @@ struct canonical_factor {
 	struct band_gen *generators;
 	int num_generators;    // Number of Artin generators in this factor.
 };
+*/
 
 /* Calculate the inverse of a canonical factor given in a permutation table. */
-void inverse(int *dest, int *permutation, int n) {
-	int *temp = malloc(n * sizeof(int));
+void inverse(uint8_t *dest, uint8_t *permutation, int n) {
+	uint8_t *temp = malloc(n * sizeof(uint8_t));
 	for (int i = 0; i < n; i++)
 		temp[permutation[i] - 1] = i + 1;
 	for (int i = 0; i < n; i++)
@@ -34,8 +40,8 @@ void inverse(int *dest, int *permutation, int n) {
 }
 
 /* Calculate the product of 2 canonical factors given in permutation tables. */
-void multiply(int *dest, int *perm_a, int *perm_b, int n) {
-	int *temp = malloc(n * sizeof(int));
+void multiply(uint8_t *dest, uint8_t *perm_a, uint8_t *perm_b, int n) {
+	uint8_t *temp = malloc(n * sizeof(uint8_t));
 	for (int i = 0; i < n; i++)
 		temp[i] = perm_a[perm_b[i] - 1];
 	for (int i = 0; i < n; i++)
@@ -44,7 +50,7 @@ void multiply(int *dest, int *perm_a, int *perm_b, int n) {
 }
 
 /* Tests two canonical factors given as permutation tables for equality. */
-bool equal(int *perm_a, int *perm_b, int n) {
+bool equal(uint8_t *perm_a, uint8_t *perm_b, int n) {
 	for (int i = 0; i < n; i++) {
 		if (perm_a[i] != perm_b[i])
 			return false;
@@ -53,7 +59,7 @@ bool equal(int *perm_a, int *perm_b, int n) {
 };
 
 /* Converts a permutation table into a descending cycle decomposition table. */
-void perm_to_desc(int *dest, int *perm, int n) {
+void perm_to_desc(uint8_t *dest, uint8_t *perm, int n) {
 	for (int i = 0; i < n; i++)
 		dest[i] = 0;
 	for (int i = n - 1; i >= 0; i--) {
@@ -65,8 +71,8 @@ void perm_to_desc(int *dest, int *perm, int n) {
 }
 
 /* Converts a descending cycle decomposition table into a permutation table. */
-void desc_to_perm(int *dest, int *desc, int n) {
-	int *temp = malloc(n * sizeof(int));
+void desc_to_perm(uint8_t *dest, uint8_t *desc, int n) {
+	uint8_t *temp = malloc(n * sizeof(uint8_t));
 	for (int i = 0; i < n; i++)
 		temp[i] = 0;
 	for (int i = 0; i < n; i++) {
@@ -86,11 +92,11 @@ void desc_to_perm(int *dest, int *desc, int n) {
  * If I am going to keep this approach, I should optimize the insertion sort a
  * bit.
  */
-void sort_triples(int *dest, int *a, int *b, int *c, int n) {
+void sort_triples(uint8_t *dest, uint8_t *a, uint8_t *b, uint8_t *c, int n) {
 	// Use bucket sort with insertion sort.
-	int *buckets_a = calloc(n * n, sizeof(int));
-	int *buckets_b = calloc(n * n, sizeof(int));
-	int *buckets_c = calloc(n * n, sizeof(int));
+	uint8_t *buckets_a = calloc(n * n, sizeof(uint8_t));
+	uint8_t *buckets_b = calloc(n * n, sizeof(uint8_t));
+	uint8_t *buckets_c = calloc(n * n, sizeof(uint8_t));
 
 
 	/*
@@ -111,7 +117,7 @@ void sort_triples(int *dest, int *a, int *b, int *c, int n) {
 	*/
 
 
-	int *bucket_i = calloc(n, sizeof(int));
+	uint8_t *bucket_i = calloc(n, sizeof(uint8_t));
 	for (int i = 0; i < n; i++) {
 		int bucket = (a[c[i] - 1] - 1) * n;
 		int bucket_index = a[c[i] - 1] - 1;
@@ -126,10 +132,10 @@ void sort_triples(int *dest, int *a, int *b, int *c, int n) {
 		for (int j = 1; j < bucket_i[i]; j++) {
 			//printf("Max: %i\n", bucket_i[i]);
 			for (int k = j; k > 0; k--) {
-				int *right_b = buckets_b + (i * n + k);
-				int *left_b = buckets_b + (i * n + k - 1);
-				int *right_c = buckets_c + (i * n + k);
-				int *left_c = buckets_c + (i * n + k - 1);
+				uint8_t *right_b = buckets_b + (i * n + k);
+				uint8_t *left_b = buckets_b + (i * n + k - 1);
+				uint8_t *right_c = buckets_c + (i * n + k);
+				uint8_t *left_c = buckets_c + (i * n + k - 1);
 
 				//printf("Comparison: %i %i ... %i %i", *left_b, *right_b, *left_c, *right_c);
 
@@ -199,8 +205,8 @@ void sort_triples(int *dest, int *a, int *b, int *c, int n) {
 
 /* Calculates the meet of two canonical factors A and B given as descending
  * cycle decomposition tables. */
-void meet(int *dest, int *desc_a, int *desc_b, int n) {
-	int *m = malloc(n * sizeof(int));
+void meet(uint8_t *dest, uint8_t *desc_a, uint8_t *desc_b, int n) {
+	uint8_t *m = malloc(n * sizeof(uint8_t));
 	for (int i = 0; i < n; i++)
 		m[i] = n - i;
 
@@ -239,7 +245,8 @@ void meet(int *dest, int *desc_a, int *desc_b, int n) {
 	free(m);
 }
 
-int *left_canonical_form(int *artins_size, int *braid, int length, int n) {
+void left_canonical_form(int8_t **dest, int *dest_len, int8_t *braid, int len, int n)
+{
 #if 0
 	
 	int as[8] = {2, 6, 3, 4, 1, 5, 7, 4};
@@ -298,17 +305,23 @@ int *left_canonical_form(int *artins_size, int *braid, int length, int n) {
 
 
 
-	int trivial[8]       = {1, 2, 3, 4, 5, 6, 7, 8}; // Trivial permutation.
+	uint8_t trivial[8]       = {1, 2, 3, 4, 5, 6, 7, 8}; // Trivial permutation.
 	//int delta[8]         = {8, 7, 6, 5, 4, 3, 2, 1}; // Fundamental braid...
 	//int delta_inverse[8] = {8, 7, 6, 5, 4, 3, 2, 1}; // ... and its inverse.
-	int delta[8]         = {8, 1, 2, 3, 4, 5, 6, 7}; // Fundamental braid...
-	int delta_inverse[8] = {2, 3, 4, 5, 6, 7, 8, 1}; // ... and its inverse.
+	uint8_t delta[8]         = {8, 1, 2, 3, 4, 5, 6, 7}; // Fundamental braid...
+	uint8_t delta_inverse[8] = {2, 3, 4, 5, 6, 7, 8, 1}; // ... and its inverse.
 
+	/*
 	int abc[8] = {0};
 	perm_to_desc(abc, delta_inverse, 8);
 	for (int i = 0; i < n; i++)
 		printf("%i ", abc[i]);
 	printf("\n");
+	*/
+
+
+
+
 
 	/*
 	int perm[8] = {2, 4, 1, 3, 5, 6, 7, 8}; // 3 1 2
@@ -353,14 +366,14 @@ int *left_canonical_form(int *artins_size, int *braid, int length, int n) {
 	length = 3;
 	*/
 
-	int *band_braid = malloc(length * n * sizeof(int));
+	uint8_t *band_braid = malloc(len * n * sizeof(uint8_t));
 	int delta_power = 0;
 
-	int *factors_delta_powers = malloc(length * sizeof(int));
+	int *factors_delta_powers = malloc(len * sizeof(int));
 
-	for (int i = 0; i < length; i++) {
+	for (int i = 0; i < len; i++) {
 		int abs_braid = abs(braid[i]);
-		int *factor = band_braid + (i * n);
+		uint8_t *factor = band_braid + (i * n);
 		// Convert into permutation table.
 		for (int j = 0; j < n; j++) {
 			if (j == abs_braid - 1)
@@ -385,9 +398,9 @@ int *left_canonical_form(int *artins_size, int *braid, int length, int n) {
 
 	printf("\n");
 
-	for (int i = length - 1; i > 0; i--) {
-		int *right = band_braid + (i * n);
-		int *left = right - n;
+	for (int i = len - 1; i > 0; i--) {
+		uint8_t *right = band_braid + (i * n);
+		uint8_t *left = right - n;
 
 		int right_delta_power = factors_delta_powers[i];
 		if (right_delta_power < 0) {
@@ -460,29 +473,29 @@ int *left_canonical_form(int *artins_size, int *braid, int length, int n) {
 
 	// Convert braid into left canonical form.
 	int i = 0;
-	while (i < length) {
-		int t = length;
-		for (int j = length - 1; j > i; j--) {
-			int *right = band_braid + (j * n);
-			int *left = right - n;
+	while (i < len) {
+		int t = len;
+		for (int j = len - 1; j > i; j--) {
+			uint8_t *right = band_braid + (j * n);
+			uint8_t *left = right - n;
 
-			int *left_inverse = malloc(n * sizeof(int));
+			uint8_t *left_inverse = malloc(n * sizeof(uint8_t));
 			inverse(left_inverse, left, n);
 
-			int *left_star = malloc(n * sizeof(int));
+			uint8_t *left_star = malloc(n * sizeof(uint8_t));
 			multiply(left_star, left_inverse, delta, n);
 
 			// Convert operands to descending cycle decomposition tables.
-			int *left_star_desc = malloc(n * sizeof(int));
+			uint8_t *left_star_desc = malloc(n * sizeof(uint8_t));
 			perm_to_desc(left_star_desc, left_star, n);
-			int *right_desc = malloc(n * sizeof(int));
+			uint8_t *right_desc = malloc(n * sizeof(uint8_t));
 			perm_to_desc(right_desc, right, n);
 
-			int *lr_meet_desc = malloc(n * sizeof(int));
+			uint8_t *lr_meet_desc = malloc(n * sizeof(uint8_t));
 			meet(lr_meet_desc, left_star_desc, right_desc, n);
 
 			// Convert meet to permutation table.
-			int *lr_meet = malloc(n * sizeof(int));
+			uint8_t *lr_meet = malloc(n * sizeof(uint8_t));
 			desc_to_perm(lr_meet, lr_meet_desc, n);
 
 			/*
@@ -536,8 +549,8 @@ int *left_canonical_form(int *artins_size, int *braid, int length, int n) {
 
 	// test
 	printf("\nFundamental Power Before: %i\n", delta_power);
-	printf("Length Before: %i\n", length);
-	for (int i = 0; i < length; i++) {
+	printf("Length Before: %i\n", len);
+	for (int i = 0; i < len; i++) {
 		for (int j = 0; j < n; j++) {
 			printf("%i ", band_braid[i * n + j]);
 		}
@@ -545,9 +558,9 @@ int *left_canonical_form(int *artins_size, int *braid, int length, int n) {
 	}
 	printf("\n");
 
-	int *band_braid_reduced = band_braid;
+	uint8_t *band_braid_reduced = band_braid;
 
-	for (; length > 0; length--) {
+	for (; len > 0; len--) {
 		if (equal(band_braid_reduced, delta, n)) {
 				band_braid_reduced += n;
 				delta_power++;
@@ -559,16 +572,16 @@ int *left_canonical_form(int *artins_size, int *braid, int length, int n) {
 		}
 	}
 
-	for (; length > 0
-			&& equal(band_braid_reduced + n * (length - 1), trivial, n);
-			length--) {
+	for (; len > 0
+			&& equal(band_braid_reduced + n * (len - 1), trivial, n);
+			len--) {
 	}
 
 
 	// test
 	printf("\n\n\nFundamental Power After: %i\n", delta_power);
-	printf("Length After: %i\n", length);
-	for (int i = 0; i < length; i++) {
+	printf("Length After: %i\n", len);
+	for (int i = 0; i < len; i++) {
 		for (int j = 0; j < n; j++) {
 			printf("%i ", band_braid_reduced[i * n + j]);
 		}
@@ -581,12 +594,12 @@ int *left_canonical_form(int *artins_size, int *braid, int length, int n) {
 
 
 	// Convert band braid into descending cycle decomposition tables.
-	int *band_braid_desc = malloc(length * n * sizeof(int));
-	for (int i = 0; i < length; i++)
+	uint8_t *band_braid_desc = malloc(len * n * sizeof(uint8_t));
+	for (int i = 0; i < len; i++)
 		perm_to_desc(band_braid_desc + i * n, band_braid_reduced + i * n, n);
 
 	printf("Descending cycles:\n");
-	for (int i = 0; i < length; i++) {
+	for (int i = 0; i < len; i++) {
 		for (int j = 0; j < n; j++) {
 			printf("%i ", band_braid_desc[i * n + j]);
 		}
@@ -605,22 +618,22 @@ int *left_canonical_form(int *artins_size, int *braid, int length, int n) {
 	// Convert band braid into Artin generators.
 	//
 	// How big can it get??????
-	int *artins = malloc(length * n * n * sizeof(int));
+	int8_t *artins = malloc(len * n * n * sizeof(int8_t));
 	int mark = 0;
 
 	// Add fundamental braids to beginning.
-	int delta_artins[7] = {7, 6, 5, 4, 3, 2, 1};
-	int delta_inverse_artins[7] = {-1, -2, -3, -4, -5, -6, -7};
+	int8_t delta_artins[7] = {7, 6, 5, 4, 3, 2, 1};
+	int8_t delta_inverse_artins[7] = {-1, -2, -3, -4, -5, -6, -7};
 	for (int i = 0; i < abs(delta_power); i++) {
 		if (delta_power > 0)
-			memcpy(artins + mark, delta_artins, (n - 1) * sizeof(int));
+			memcpy(artins + mark, delta_artins, (n - 1) * sizeof(int8_t));
 		else
-			memcpy(artins + mark, delta_inverse_artins, (n - 1) * sizeof(int));
+			memcpy(artins + mark, delta_inverse_artins, (n - 1) * sizeof(int8_t));
 		mark += n - 1;
 	}
 	
-	for (int i = 0; i < length; i++) {
-		int *factor = band_braid_desc + (i * n);
+	for (int i = 0; i < len; i++) {
+		uint8_t *factor = band_braid_desc + (i * n);
 		bool *done = calloc(n, sizeof(bool));
 		for (int j = n - 1; j >= 0; j--) {
 			if (factor[j] !=  j + 1 || done[factor[j] - 1])
@@ -654,8 +667,11 @@ int *left_canonical_form(int *artins_size, int *braid, int length, int n) {
 
 	free(band_braid_desc);
 
-	*artins_size = mark;
-	return artins;
+	//*artins_size = mark;
+	//return artins;
+
+	*dest = artins;
+	*dest_len = mark;
 }
 
 #endif

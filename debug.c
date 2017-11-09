@@ -3,13 +3,13 @@
 
 #include "math.h"
 
-void print_braid(int *braid, int length) {
+void print_braid(int8_t *braid, int length) {
 	for (int i = 0; i < length; i++)
 		printf("%i ", braid[i]);
 	printf("\n");
 }
 
-void print_permutation(int *braid, int length) {
+void print_permutation(int8_t *braid, int length) {
 	int perm[] = {1, 2, 3, 4, 5, 6, 7, 8};
 
 	for (int i = 0; i < length; i++) {

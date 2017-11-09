@@ -1,13 +1,14 @@
 #include "debug.c"
 
-void free_reduce(int *new_len, int *braid, int len);
+void dehornoy(int8_t **dest, int *dest_len, int8_t *braid, int len);
+void free_reduce(int *new_len, int8_t *braid, int len);
 
 void test_shit() {
-	int braid[] = {
+	int8_t braid[] = {
 		1, -1, 5, 5, -5, 2, -3, 2, 3, -3, 4, -5, 5, 6, -6, 7
 	};
 	int len = 0;
-	free_reduce(&len, braid, sizeof(braid) / sizeof(int));
+	free_reduce(&len, braid, sizeof(braid) / sizeof(int8_t));
 
 	for (int i = 0; i < len; i++)
 		printf("%i ", braid[i]);
@@ -18,27 +19,29 @@ int sig(int x) {
 	return x > 0 ? 1 : (x < 0 ? -1 : 0);
 }
 
-void free_reduce(int *new_len, int *braid, int len) {
+void free_reduce(int *new_len, int8_t *braid, int len) {
 	int i = 0;
 	for (; i < len - 1 && braid[i] != -1 * braid[i + 1]; i++);
 
 	int mark = 0;
-	int arr[1000] = {0};
+	//int arr[1000] = {0};
 	for (int j = i + 2; j < len; j++) {
 		if (j + 1 < len && braid[j] == -1 * braid[j + 1]) {
-			arr[mark++] = j;
+			//arr[mark++] = j;
 			j++;
 		} else
 			braid[i++] = braid[j];
 	}
 	
+	/*
 	printf("FRlen: %i, FRi: %i\n", len, i);
 	if ((len - i) % 2 != 0)
 		print_braid(arr, mark);
+		*/
 	*new_len = (i < len - 1) ? i : len;
 }
 
-void dehornoy(int **dest, int *dest_len, int *braid, int len) {
+void dehornoy(int8_t **dest, int *dest_len, int8_t *braid, int len) {
 	// Make sure that this braid has enough space for the reduction expansions!
 #if 0
 	int braid_inline[] = {
@@ -113,7 +116,7 @@ void dehornoy(int **dest, int *dest_len, int *braid, int len) {
 		}
 
 		// 2 * too short for handle?
-		int *handle = calloc(10 * (end - start + 1), sizeof(int));
+		int8_t *handle = calloc(10 * (end - start + 1), sizeof(int8_t));
 
 		int start_sig = sig(braid[start]);
 		int main_gen = abs(braid[start]);
@@ -157,7 +160,7 @@ void dehornoy(int **dest, int *dest_len, int *braid, int len) {
 		if (start + handle_len - 1 != end) {
 		//if (start + handle_len > end) {
 			memmove(braid + start + handle_len, braid + end + 1,
-					(len - end - 1) * sizeof(int));
+					(len - end - 1) * sizeof(int8_t));
 			printf("len before: %i, ", len);
 			len += start + handle_len - end - 1;
 			printf("after: %i      (orig: %i)\n", len, orig);
