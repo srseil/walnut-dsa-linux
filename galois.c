@@ -1,5 +1,8 @@
-#ifndef GALOIS
-#define GALOIS
+#include <stdint.h>
+#include <stdbool.h>
+#include <math.h>
+
+#include "galois.h"
 
 uint8_t galois_mult(uint8_t a, uint8_t b, int q);
 uint8_t galois_inverse(uint8_t x, int q);
@@ -30,12 +33,11 @@ uint8_t galois_mult(uint8_t a, uint8_t b, int q) {
 
 
 uint8_t galois_inverse(uint8_t x, int q) {
-	for (int i = 0; i < q; i++) {
+	int i;
+	for (i = 0; i < q; i++) {
 		if (galois_mult(x, i, q) == 1)
 			return i;
 	}
 	return 0;
 }
-
-#endif
 
