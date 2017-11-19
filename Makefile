@@ -1,13 +1,10 @@
+obj-m := module.o
 
-main:
-	gcc -Wall -Wextra -Wdeclaration-after-statement -std=gnu89 -lm -g -pg walnut.c bkl.c dehornoy.c userspace.c galois.c debug.c
+KERNEL_SRC = /lib/modules/$(shell uname -r)/build
 
-run:
-	./a.out
+all:
+	make -C $(KERNEL_SRC) M=$(PWD) modules
 
-debug:
-	./a.out
-
-valgrind:
-	valgrind --leak-check=full ./a.out
+clean:
+	make -C $(KERNEL_SRC) M=$(PWD) clean
 

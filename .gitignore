@@ -5,4 +5,14 @@ fragen.txt
 todo.txt
 arbeit.txt
 besprechung.txt
+kernel.txt
+
+.module*
+.tmp_versions/
+Module.symvers
+module.ko
+module.mod.c
+module.mod.o
+module.o
+modules.order
 
